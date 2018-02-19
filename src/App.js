@@ -4,7 +4,6 @@ import { Grid, Row, Col, Button } from 'react-bootstrap';
 import Radium, { Style } from 'radium';
 import Color from 'color';
 
-import SampleText from './SampleTextComponent';
 import { SAMPLE_TEXT } from './text.js';
 import { COLOURS } from './colours.js';
 
