@@ -1,0 +1,44 @@
+.App {
+  text-align: left;
+  padding-top: 40px;
+}
+
+.row {
+  display: flex;
+}
+
+.sample-text {
+
+}
+
+.user-selections {
+  background-color: #e9ecf5;
+  padding-top: 40px;
+  font-family: courier;
+}
+
+.text {
+  line-height: 1.7;
+}
+
+.char {
+  padding: 3px 0;
+}
+
+h1 {
+  margin-top: 0;
+}
+
+ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+li {
+  margin-bottom: 30px;
+}
+
+@keyframes App-logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
