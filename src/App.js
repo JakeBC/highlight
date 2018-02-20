@@ -1,25 +1,36 @@
 import React, { Component } from 'react';
 import './App.css';
 import { Grid, Row, Col, Button } from 'react-bootstrap';
-import Radium, { Style } from 'radium';
 import Color from 'color';
 
-import { SAMPLE_TEXT } from './text.js';
-import { COLOURS } from './colours.js';
+import { SAMPLE_TEXT } from './text';
+import SampleText from './SampleTextComponent';
 
 class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
             userSelections: [],
-            charArray: SAMPLE_TEXT.split('').map(c => {
-                return {
-                    char: c
-                }
-            })
+            text: this.prepareContent()
         };
         this.selectEnd = this.handleSelectEnd.bind(this);
         this.clear = this.handleClear.bind(this);
+    }
+
+    // Create a span for each character in SAMPLE_TEXT
+    // Use id to reference block and position
+    prepareContent() {
+        return SAMPLE_TEXT.map((block, i) => {
+            return {
+                ...block,
+                content: block.content.split('').map((char, j) => {
+                    const key = 'char-'+i+'-'+j;
+                    return (
+                        <span id={key} key={key} className='char'>{char}</span>
+                    );
+                })
+            }
+        });
     }
 
     handleSelectEnd() {
@@ -29,110 +40,122 @@ class App extends Component {
         if (selectedText.toString()) {
             let userSelections = this.state.userSelections;
             const range = selectedText.getRangeAt(0);
-            const startId = range.startContainer.parentElement.id
-            const endId = range.endContainer.parentElement.id
 
-            const start = parseInt(startId.substring(3));
-            const end = parseInt(endId.substring(3));
+            // determine the start and end elements
+            const startElem = range.startContainer.parentElement;
+            const endElem = range.endContainer.parentElement;
 
-            // generate a new colour and combine it with any existing ones
-            let chars = this.state.charArray;
+            const startBlock = parseInt(startElem.id.split('-')[1]);
+            const startPos = parseInt(startElem.id.split('-')[2]);
+            const endBlock = parseInt(endElem.id.split('-')[1]);
+            const endPos = parseInt(endElem.id.split('-')[2]);
+
+            const startIndex = parseInt(startElem.id.substring(5));
+            const endIndex = parseInt(endElem.id.substring(5));
+            let text = this.state.text;
+
             const newColour = `rgba(
                 ${Math.floor(Math.random() * 255)},
                 ${Math.floor(Math.random() * 255)},
                 ${Math.floor(Math.random() * 255)},
-                0.5
+                0.75
             )`;
-            for (let i = start; i <= end; i++) {
-                chars[i].colour = this.combineColours(chars[i].colour, newColour);
+
+            // Update the text to highlight the selected text
+            if (startBlock === endBlock) {
+                let content = text[startIndex].content;
+                for (let i = startPos; i <= endPos; i++) {
+                    content[i] = this.updateStyle(content[i], newColour);
+                }
+                text[startIndex].content = content;
+            }
+            else {
+                for (let i = startBlock; i <= endBlock; i++) {
+                    let content = text[i].content;
+                    if (i === startBlock) {
+                        // highlight from startPos to end
+                        for (let j = startPos; j < content.length; j++) {
+                            content[j] = this.updateStyle(content[j], newColour);
+                        }
+                    }
+                    else if (i === endBlock) {
+                        // highlight from start to endPos
+                        for (let j = 0; j <= endPos; j++) {
+                            content[j] = this.updateStyle(content[j], newColour);
+                        }
+                    }
+                    else {
+                        // highlight everything in this block
+                        content = content.map(c => {
+                            return this.updateStyle(c, newColour);
+                        })
+                    }
+                    text[i].content = content;
+                }
             }
 
+            // update the selections for the sidebar
             userSelections.push({
-                text: selectedText.toString(),
-                start: start,
-                end: end
+                text: selectedText.toString()
             })
             this.setState({
-                userSelections: userSelections
+                userSelections: userSelections,
+                text: text
             });
         }
+        selectedText.empty();
+        selectedText.removeAllRanges();
+    }
+
+    // Add a highlight colour to the elements in the selection.
+    updateStyle(element, newColour) {
+        const currentColour = element.props.style
+            ? element.props.style.backgroundColor
+            : null;
+
+        if (currentColour) {
+            const colourObj = Color(currentColour);
+            const c = colourObj.mix(Color(newColour));
+            newColour = c.toString();
+        }
+
+        return React.cloneElement(element, {
+            style: {
+                backgroundColor: newColour
+            }
+        });
     }
 
     // reset to the original state
     handleClear() {
         this.setState({
             userSelections: [],
-            charArray: SAMPLE_TEXT.split('').map(c => {
-                return {
-                    char: c
-                }
-            })
+            text: this.prepareContent()
         })
     }
 
-    combineColours(currentColour, newColour) {
-        if (!currentColour) {
-            return newColour;
-        }
-
-        const colourObj = Color(currentColour);
-        const c = colourObj.mix(Color(newColour));
-        return c.toString();
-    }
-
+    // Factory for rendering formatted elements for the SAMPLE_TEXT
     renderText() {
         return (
-            <div onMouseUp={this.selectEnd}
-                className='text'
-            >
+            <SampleText handleSelectEnd={this.selectEnd}>
             {
-                this.state.charArray.map((c, i) => {
-                    return (
-                        <span key={'char-'+i}
-                            id={'id-'+i}
-                            className='char'
-                            style={{
-                                backgroundColor: c.colour
-                            }}
-                        >
-                            {c.char}
-                        </span>
-                    )
+                this.state.text.map((elem, i) => {
+                    // TODO: support other element types
+                    const id = 'elem-'+i;
+                    switch (elem.type) {
+                    case 'h1':
+                        return <h1 key={id} id={id}>{elem.content}</h1>;
+                    case 'h2':
+                        return <h2 key={id} id={id}>{elem.content}</h2>;
+                    case 'a':
+                        return <a key={id} id={id} href={elem.href}>{elem.content}</a>;
+                    default:
+                        return <p key={id} id={id}>{elem.content}</p>;
+                    }
                 })
             }
-            </div>
-        )
-    }
-
-    renderStyles() {
-        // build the selector
-        // add the styles (background colour)
-        const blocks = this.state.userSelections.map(s => {
-            const arr = [];
-            for (let i = s.start; i <= s.end; i++) {
-                arr.push('#id-'+i);
-            }
-            return arr;
-        });
-
-        return (
-            <div>
-            {
-                blocks.map((b, i) => {
-                    const bgc = COLOURS[i % 10];
-                    const selector = b.join(',');
-                    return (
-                        <Style key={'style-'+i}
-                            scopeSelector={selector}
-                            rules={{
-                                backgroundColor: bgc
-                            }}
-                        />
-                    )
-                })
-            }
-            </div>
-        )
+            </SampleText>
+        );
     }
 
     render() {

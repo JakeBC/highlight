@@ -7,22 +7,10 @@
   display: flex;
 }
 
-.sample-text {
-
-}
-
 .user-selections {
   background-color: #e9ecf5;
   padding-top: 40px;
   font-family: courier;
-}
-
-.text {
-  line-height: 1.7;
-}
-
-.char {
-  padding: 3px 0;
 }
 
 h1 {
@@ -38,7 +26,14 @@ li {
   margin-bottom: 30px;
 }
 
-@keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+a {
+  display: block;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+h1, h2, p, a {
+  line-height: normal;
+  margin: 0;
+  padding: 0 0 10px 0;
 }
